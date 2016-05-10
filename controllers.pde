@@ -9,26 +9,30 @@ public class ControlFrame extends PApplet {
   Object parent;
   int yShift = 0;
   
+  // set up the window, tabs and controllers in each tab
   public void setup() {
+    // set up window properties
     size(w, h);
     frameRate(25);
     cp5 = new ControlP5(this);
-    cp5.addTab("audio")
+
+    // set up tabs
+    cp5.addTab("Camera")
       .setColorBackground(color(0, 160, 100))
       .setColorLabel(color(255))
       .setColorActive(color(255,128,0))
       ;
-    cp5.addTab("axis")
+    cp5.addTab("Lights")
       .setColorBackground(color(0, 0, 100))
       .setColorLabel(color(255))
       .setColorActive(color(255,20,0))
       ;
-    cp5.addTab("lights")
+    cp5.addTab("Data Transform")
       .setColorBackground(color(100, 0, 100))
       .setColorLabel(color(255))
       .setColorActive(color(0,20,255))
       ;
-    cp5.addTab("noise")
+    cp5.addTab("Triangulation")
       .setColorBackground(color(100, 100, 0))
       .setColorLabel(color(255))
       .setColorActive(color(0,255,20))
@@ -36,27 +40,32 @@ public class ControlFrame extends PApplet {
 
     cp5.getTab("default")
        .activateEvent(true)
-       .setLabel("my default tab")
-       .setId(15)
+       .setLabel("Input/Output")
+       .setId(5)
        ;
-     cp5.getTab("audio")
+    cp5.getTab("Camera")
        .activateEvent(true)
        .setId(4)
        ;
-    cp5.getTab("axis")
+    cp5.getTab("Lights")
        .activateEvent(true)
        .setId(1)
        ;
-    cp5.getTab("lights")
+    cp5.getTab("Data Transform")
        .activateEvent(true)
        .setId(2)
        ;
-    cp5.getTab("noise")
+    cp5.getTab("Triangulation")
        .activateEvent(true)
        .setId(3)
        ;
 
-////////////////////// INPUT DATA ///////////////
+    // set up controllers in each tab
+  /*
+   *  I/O tab start
+   */
+
+    ////////////////// INPUT MOVEMENT DATA ///////////////
     yShift = 20;
     cp5.addRadioButton("inputData")
        .setPosition(20,30+yShift)
@@ -90,31 +99,283 @@ public class ControlFrame extends PApplet {
       .plugTo(parent,"kinectJump");
     kinectJump = 10;
 
-    ////////////////// BACKGROUND ///////////////
-    yShift += 90;
-    cp5.addRadioButton("back")
-       .setPosition(20,100+yShift)
+    yShift += 180;
+    
+    ////////////////// INPUT AUDIO ///////////////
+    cp5.addButton("select audio")
+     .setPosition(20,yShift)
+     .setSize(80,20)
+     ;
+    // cp5.getController("select audio").moveTo("default");
+
+    cp5.addToggle("audio pause")
+       .setPosition(120,yShift)
+       .setSize(20,20)
+       ;
+    // cp5.getController("audio pause").moveTo("default");
+      yShift+=70;
+
+    ////////////////// OUTPUT KEYFRAME ///////////////
+    cp5.addRadioButton("recording")
+       .setPosition(20, yShift)
        .setSize(60,20)
        .setColorForeground(color(120))
        .setColorActive(color(255))
        .setColorLabel(color(255))
        .setItemsPerRow(2)
-       .setSpacingColumn(120)
-       .addItem("with background",1)
-       .addItem("just body",2)
+       .setSpacingColumn(60)
+       .addItem("record",1)
+       .addItem("stop",2)
+       //.addItem("finish",)
+       ;
+      isRecording = false;
+
+//  I/O tab end ---------------------------------
+ 
+
+/*
+ *  Camera tab start
+ */
+    yShift = 20;
+    cp5.addToggle("flipX")
+     .setPosition(20,50)
+     .setSize(50,20)
+     ;
+    cp5.getController("flipX").moveTo("Camera");
+
+    cp5.addToggle("flipY")
+     .setPosition(20,100)
+     .setSize(50,20)
+     ;    
+    cp5.getController("flipY").moveTo("Camera");
+
+    cp5.addToggle("flipZ")
+     .setPosition(20,150)
+     .setSize(50,20)
+     ;
+    cp5.getController("flipZ").moveTo("Camera");
+
+    ////////////////// AUDIO ROTATION ///////////////
+
+    cp5.addCheckBox("Auto Rotation")
+      .setPosition(20, 240)
+      .setSize(60, 20)
+      .setItemsPerRow(4)
+      .setSpacingColumn(30)
+      .setSpacingRow(20)
+      .addItem("yes",1)
+      .addItem("pitch",2)
+      .addItem("yaw",3)
+      .addItem("roll",4)
+      .moveTo("Camera")
+      ;
+
+    cp5.addSlider("Pitch velocity",0.001,0.02,0,20,280,300,20)
+      .setDecimalPrecision(3)
+      .plugTo(parent,"velocityPitch")
+      .moveTo("Camera")
+      ;
+    velocityPitch = 0.001;
+
+    cp5.addSlider("Yaw velocity",0.001,0.02,0,20,310,300,20)
+      .setDecimalPrecision(3)
+      .plugTo(parent,"velocityYaw")
+      .moveTo("Camera")
+      ;   
+    velocityYaw = 0.001;
+
+    cp5.addSlider("Roll velocity",0.001,0.02,0,20,340,300,20)
+      .setDecimalPrecision(3)
+      .plugTo(parent,"velocityRoll")
+      .moveTo("Camera")
+      ;
+    velocityRoll =0.001;
+
+    cp5.addToggle("reset rotations")
+      .setPosition(20,380)
+      .setSize(40,20)
+      .moveTo("Camera")
+      ;
+
+//  Camera tab end ---------------------------------
+
+
+/*
+ *  Lights tab start
+ */
+
+    fixLight = false;
+    cp5.addToggle("fix light")
+     .setPosition(20,40)
+     .setSize(50,20)
+     ;
+    cp5.getController("fix light").moveTo("Lights");
+
+    lightYpos = 0;
+    cp5.addSlider("lights Y pos",1.0,-1.0,0,480,40,20,300)
+      .plugTo(parent,"lightYpos");
+    cp5.getController("lights Y pos").moveTo("Lights");
+
+    lightsNr = 5;
+    cp5.addSlider("spotlights nr",0,5,lightsNr,20,80,200,20)
+      .plugTo(parent,"lightsNr");
+    cp5.getController("spotlights nr").moveTo("Lights");
+
+    lightZ =100;
+    cp5.addSlider("spotlights z",0,1000,lightZ,20,105,200,20)
+      .plugTo(parent,"lightZ");
+    cp5.getController("spotlights z").moveTo("Lights");
+
+    lightAngle = PI/2;
+    cp5.addSlider("spotlights cone angle",PI,PI/16,lightAngle,20,130,200,20)
+      .plugTo(parent,"lightAngle");
+    cp5.getController("spotlights cone angle").moveTo("Lights");
+
+//  Lights tab end ---------------------------------
+
+
+/*
+ *  Data Transform tab start
+ */
+    ////////////////// PERLIN NOISE ///////////////
+
+    cp5.addSlider("Perlin Distance X",0,0.05,0,20,50,300,20)
+      .setDecimalPrecision(3)
+      .plugTo(parent,"perlinNoiseX");
+    cp5.getController("Perlin Distance X").moveTo("Data Transform");
+    perlinNoiseX = 0;
+
+    cp5.addSlider("Noise Scale X",0,300,0,20,80,300,20)
+      .plugTo(parent,"noiseScaleX");
+    cp5.getController("Noise Scale X").moveTo("Data Transform");
+    noiseScaleX = 0;
+
+    cp5.addSlider("Perlin Distance Y",0,0.05,0,20,110,300,20)
+      .setDecimalPrecision(3)
+      .plugTo(parent,"perlinNoiseY");
+    cp5.getController("Perlin Distance Y").moveTo("Data Transform");
+    perlinNoiseY = 0;
+
+    cp5.addSlider("Noise Scale Y",0,300,0,20,140,300,20)
+      .plugTo(parent,"noiseScaleY");
+    cp5.getController("Noise Scale Y").moveTo("Data Transform");
+    noiseScaleY = 0;
+
+    cp5.addSlider("Perlin Distance Z",0,0.05,0,20,170,300,20)
+      .setDecimalPrecision(3)
+      .plugTo(parent,"perlinNoiseZ");
+    cp5.getController("Perlin Distance Z").moveTo("Data Transform");
+    perlinNoiseZ = 0;
+
+    cp5.addSlider("Noise Scale Z",0,300,0,20,200,300,20)
+      .plugTo(parent,"noiseScaleZ");
+    cp5.getController("Noise Scale Z").moveTo("Data Transform");
+    noiseScaleZ = 0;
+
+    ////////////////////// RANDOM ///////////////////
+
+    cp5.addSlider("Random X Range",0,300,0,20,300,300,20)
+      .plugTo(parent,"randomXmax");
+    cp5.getController("Random X Range").moveTo("Data Transform");
+    randomXmax = 0;
+
+    cp5.addSlider("Random Y Range",0,300,0,20,330,300,20)
+      .plugTo(parent,"randomYmax");
+    cp5.getController("Random Y Range").moveTo("Data Transform");
+    randomXmax = 0;
+
+    cp5.addSlider("Random Z Range",0,300,0,20,360,300,20)
+      .plugTo(parent,"randomZmax");
+    cp5.getController("Random Z Range").moveTo("Data Transform");
+    randomXmax = 0;
+
+    cp5.addSlider("Number of around points",0,10,0,20,390,300,20)
+      .plugTo(parent,"aroundNr");
+    cp5.getController("Number of around points").moveTo("Data Transform");
+    aroundNr =3;
+
+    rMinX = 0;
+    rMaxX = 1;
+    cp5.addRange("Range random x")
+     // disable broadcasting since setRange and setRangeValues will trigger an event
+     .setBroadcast(false) 
+     .setPosition(20,420)
+     .setSize(240,20)
+     .setHandleSize(2)
+     .setRange(-100,100)
+     .setRangeValues(rMinX,rMaxX)
+     // after the initialization we turn broadcast back on again
+     .setBroadcast(true)
+     .moveTo("Data Transform")
+     ;
+
+    rMinY = 0;
+    rMaxY = 1;
+    cp5.addRange("Range random y")
+     // disable broadcasting since setRange and setRangeValues will trigger an event
+     .setBroadcast(false) 
+     .setPosition(20,450)
+     .setSize(240,20)
+     .setHandleSize(2)
+     .setRange(-100,100)
+     .setRangeValues(rMinY,rMaxY)
+     // after the initialization we turn broadcast back on again
+     .setBroadcast(true)
+     .moveTo("Data Transform")
+     ;
+
+    rMinZ = 0;
+    rMaxZ = 1;
+    cp5.addRange("Range random z")
+     // disable broadcasting since setRange and setRangeValues will trigger an event
+     .setBroadcast(false) 
+     .setPosition(20,480)
+     .setSize(240,20)
+     .setHandleSize(2)
+     .setRange(-100,100)
+     .setRangeValues(rMinZ,rMaxZ)
+     // after the initialization we turn broadcast back on again
+     .setBroadcast(true)
+     .moveTo("Data Transform")
+     ;
+
+
+//  Data Transform tab end ---------------------------------
+
+
+/*
+ *  Triangulation tab start
+ */
+    yShift = 50;
+
+    ////////////////// BACKGROUND ///////////////
+    cp5.addRadioButton("back")
+      .setPosition(20,yShift)
+      .setSize(60,20)
+      .setColorForeground(color(120))
+      .setColorActive(color(255))
+      .setColorLabel(color(255))
+      .setItemsPerRow(2)
+      .setSpacingColumn(120)
+      .addItem("with background",1)
+      .addItem("just body",2)
+      .moveTo("Triangulation")
        ;
 
     pointsNr = 300;
-    cp5.addSlider("points Nr",0,600,pointsNr,20,130+yShift,240,14)
-      .plugTo(parent,"pointsNr");
+    cp5.addSlider("points Nr",0,600,pointsNr,20,30+yShift,240,14)
+      .plugTo(parent,"pointsNr")
+      .moveTo("Triangulation")
+      ;
     
     backMargin = 0;
-    cp5.addSlider("background margin",-1000,1000,backMargin,20,150+yShift,240,14)
+    cp5.addSlider("background margin",-1000,1000,backMargin,20,50+yShift,240,14)
       .plugTo(parent,"backMargin")
+      .moveTo("Triangulation")
       ;
 
     cp5.addRadioButton("regRand")
-       .setPosition(20,175+yShift)
+       .setPosition(20,75+yShift)
        .setSize(60,20)
        .setColorForeground(color(120))
        .setColorActive(color(255))
@@ -123,6 +384,7 @@ public class ControlFrame extends PApplet {
        .setSpacingColumn(120)
        .addItem("regular background",1)
        .addItem("random",2)
+      .moveTo("Triangulation")
        ;
 
     zMin=0;
@@ -130,7 +392,7 @@ public class ControlFrame extends PApplet {
     cp5.addRange("z Controller")
      // disable broadcasting since setRange and setRangeValues will trigger an event
      .setBroadcast(false) 
-     .setPosition(20,200+yShift)
+     .setPosition(20,100+yShift)
      .setSize(240,10)
      .setHandleSize(20)
      .setRange(0,200)
@@ -139,22 +401,26 @@ public class ControlFrame extends PApplet {
      .setBroadcast(true)
      // .setColorForeground(color(255,40))
      // .setColorBackground(color(255,40))  
+      .moveTo("Triangulation")
      ;
 
-    /// BODY
-    yShift+=45;
-    cp5.addSlider("bufferSize",1,8000,0,20,202+yShift,240,14)
+    ////////////////////// BODY ///////////////////
+
+    yShift+=55;
+    cp5.addSlider("bufferSize",1,8000,0,20,102+yShift,240,14)
       .plugTo(parent,"bufferSize")
+      .moveTo("Triangulation")
       ;
     bufferSize = 0;
 
-    cp5.addSlider("skipFrames",1,9,1,20,218+yShift,100,14)
+    cp5.addSlider("skipFrames",1,9,1,20,118+yShift,100,14)
       .plugTo(parent,"skipFrames")
+      .moveTo("Triangulation")
       ;
     skipFrames = 1;
 
     cp5.addRadioButton("sufraceFlat")
-       .setPosition(20,245+yShift)
+       .setPosition(20,145+yShift)
        .setSize(60,20)
        .setColorForeground(color(120))
        .setColorActive(color(255))
@@ -163,25 +429,30 @@ public class ControlFrame extends PApplet {
        .setSpacingColumn(120)
        .addItem("flat",1)
        .addItem("surface",2)
+      .moveTo("Triangulation")
        ;
     makeDelauney = false;
 
     yShift+=30;
 
-    ///////// DISTANCE FILTER
+    ////////////////////// DISTANCE FILTER ///////////////////
+
     drawLimits = false;
     cp5.addToggle("use distance filter")
-     .setPosition(20,270+yShift)
+     .setPosition(20,170+yShift)
      .setSize(60,20)
+      .moveTo("Triangulation")
      ;
 
     maxDist = 100;
-    cp5.addSlider("max node distance",0,1000,maxDist,20,310+yShift,240,20)
-      .plugTo(parent,"maxDist");
+    cp5.addSlider("max node distance",0,1000,maxDist,20,210+yShift,240,20)
+      .plugTo(parent,"maxDist")
+      .moveTo("Triangulation")
+      ;
 
+    ////////////////////// TRIANGLES OPTIONS ///////////////////
 
-    // TRIANGLES
-    yShift+=340;
+    yShift+=240;
     hasTexture = false;
 
     cp5.addRadioButton("hueOrTexture")
@@ -195,15 +466,15 @@ public class ControlFrame extends PApplet {
        .addItem("use hue",1)
        .addItem("use picture",2)
        .addItem("use video",3)
+      .moveTo("Triangulation")
        ;
 
-    
-    // triangles tab
     // name, minValue, maxValue, defaultValue, x, y, width, height
     cp5.addSlider("triangleAlpha",0,255,210,20,60+yShift,240,20)
-      .plugTo(parent,"triangleAlpha");
+      .plugTo(parent,"triangleAlpha")
+      .moveTo("Triangulation")
+      ;
     triangleAlpha =200;
-
 
     hMin=114;
     hMax=164;
@@ -219,249 +490,33 @@ public class ControlFrame extends PApplet {
      .setBroadcast(true)
      // .setColorForeground(color(255,40))
      // .setColorBackground(color(255,40))  
+      .moveTo("Triangulation")
      ;
 
     hRef = 0;
     cp5.addSlider("hue reference",0,255,hRef,20,120+yShift,240,20)
-      .plugTo(parent,"hRef");
+      .plugTo(parent,"hRef")
+      .moveTo("Triangulation")
+      ;
 
 
     cp5.addButton("select picture")
      //.setValue(0)
      .setPosition(20,150+yShift)
      .setSize(70,18)
+      .moveTo("Triangulation")
      ;
 
     cp5.addButton("select video")
      //.setValue(0)
      .setPosition(190,150+yShift)
      .setSize(70,18)
+      .moveTo("Triangulation")
      ;
 
-    yShift+=40;
-    cp5.addRadioButton("recording")
-       .setPosition(150,180+yShift)
-       .setSize(60,20)
-       .setColorForeground(color(120))
-       .setColorActive(color(255))
-       .setColorLabel(color(255))
-       .setItemsPerRow(2)
-       .setSpacingColumn(60)
-       .addItem("record",1)
-       .addItem("stop",2)
-       //.addItem("finish",)
-       ;
-      isRecording = false;
+  } // setup() ends
 
-    ////////------------- audio tab
-    cp5.addButton("select audio")
-     .setPosition(20,40)
-     .setSize(80,20)
-     ;
-    cp5.getController("select audio").moveTo("audio");
-
-    cp5.addToggle("audio pause")
-       .setPosition(120,40)
-       .setSize(20,20)
-       ;
-    cp5.getController("audio pause").moveTo("audio");
-
-    //////////// ------------- noise tab
-    cp5.addSlider("Perlin Distance X",0,0.05,0,20,50,300,20)
-      .setDecimalPrecision(3)
-      .plugTo(parent,"perlinNoiseX");
-    cp5.getController("Perlin Distance X").moveTo("noise");
-    perlinNoiseX = 0;
-
-    cp5.addSlider("Noise Scale X",0,300,0,20,80,300,20)
-      .plugTo(parent,"noiseScaleX");
-    cp5.getController("Noise Scale X").moveTo("noise");
-    noiseScaleX = 0;
-
-    cp5.addSlider("Perlin Distance Y",0,0.05,0,20,110,300,20)
-      .setDecimalPrecision(3)
-      .plugTo(parent,"perlinNoiseY");
-    cp5.getController("Perlin Distance Y").moveTo("noise");
-    perlinNoiseY = 0;
-
-    cp5.addSlider("Noise Scale Y",0,300,0,20,140,300,20)
-      .plugTo(parent,"noiseScaleY");
-    cp5.getController("Noise Scale Y").moveTo("noise");
-    noiseScaleY = 0;
-
-    cp5.addSlider("Perlin Distance Z",0,0.05,0,20,170,300,20)
-      .setDecimalPrecision(3)
-      .plugTo(parent,"perlinNoiseZ");
-    cp5.getController("Perlin Distance Z").moveTo("noise");
-    perlinNoiseZ = 0;
-
-    cp5.addSlider("Noise Scale Z",0,300,0,20,200,300,20)
-      .plugTo(parent,"noiseScaleZ");
-    cp5.getController("Noise Scale Z").moveTo("noise");
-    noiseScaleZ = 0;
-
-    /// random
-    cp5.addSlider("Random X Range",0,300,0,20,300,300,20)
-      .plugTo(parent,"randomXmax");
-    cp5.getController("Random X Range").moveTo("noise");
-    randomXmax = 0;
-
-    cp5.addSlider("Random Y Range",0,300,0,20,330,300,20)
-      .plugTo(parent,"randomYmax");
-    cp5.getController("Random Y Range").moveTo("noise");
-    randomXmax = 0;
-
-    cp5.addSlider("Random Z Range",0,300,0,20,360,300,20)
-      .plugTo(parent,"randomZmax");
-    cp5.getController("Random Z Range").moveTo("noise");
-    randomXmax = 0;
-
-    cp5.addSlider("Number of around points",0,10,0,20,390,300,20)
-      .plugTo(parent,"aroundNr");
-    cp5.getController("Number of around points").moveTo("noise");
-    aroundNr =3;
-
-    rMinX = 0;
-    rMaxX = 1;
-    cp5.addRange("Range random x")
-     // disable broadcasting since setRange and setRangeValues will trigger an event
-     .setBroadcast(false) 
-     .setPosition(20,420)
-     .setSize(240,20)
-     .setHandleSize(2)
-     .setRange(-100,100)
-     .setRangeValues(rMinX,rMaxX)
-     // after the initialization we turn broadcast back on again
-     .setBroadcast(true)
-     .moveTo("noise")
-     ;
-
-    rMinY = 0;
-    rMaxY = 1;
-    cp5.addRange("Range random y")
-     // disable broadcasting since setRange and setRangeValues will trigger an event
-     .setBroadcast(false) 
-     .setPosition(20,450)
-     .setSize(240,20)
-     .setHandleSize(2)
-     .setRange(-100,100)
-     .setRangeValues(rMinY,rMaxY)
-     // after the initialization we turn broadcast back on again
-     .setBroadcast(true)
-     .moveTo("noise")
-     ;
-
-    rMinZ = 0;
-    rMaxZ = 1;
-    cp5.addRange("Range random z")
-     // disable broadcasting since setRange and setRangeValues will trigger an event
-     .setBroadcast(false) 
-     .setPosition(20,480)
-     .setSize(240,20)
-     .setHandleSize(2)
-     .setRange(-100,100)
-     .setRangeValues(rMinZ,rMaxZ)
-     // after the initialization we turn broadcast back on again
-     .setBroadcast(true)
-     .moveTo("noise")
-     ;
-
-    ////////////-------------- axis tab
-    cp5.addToggle("flipX")
-     .setPosition(20,50)
-     .setSize(50,20)
-     ;
-    cp5.getController("flipX").moveTo("axis");
-
-    cp5.addToggle("flipY")
-     .setPosition(20,100)
-     .setSize(50,20)
-     ;    
-    cp5.getController("flipY").moveTo("axis");
-
-    cp5.addToggle("flipZ")
-     .setPosition(20,150)
-     .setSize(50,20)
-     ;
-    cp5.getController("flipZ").moveTo("axis");
-
-    cp5.addCheckBox("Auto Rotation")
-      .setPosition(20, 240)
-      .setSize(60, 20)
-      .setItemsPerRow(4)
-      .setSpacingColumn(30)
-      .setSpacingRow(20)
-      .addItem("yes",1)
-      .addItem("pitch",2)
-      .addItem("yaw",3)
-      .addItem("roll",4)
-      .moveTo("axis")
-      ;
-
-    cp5.addSlider("Pitch velocity",0.001,0.02,0,20,280,300,20)
-      .setDecimalPrecision(3)
-      .plugTo(parent,"velocityPitch")
-      .moveTo("axis")
-      ;
-    velocityPitch = 0.001;
-
-    cp5.addSlider("Yaw velocity",0.001,0.02,0,20,310,300,20)
-      .setDecimalPrecision(3)
-      .plugTo(parent,"velocityYaw")
-      .moveTo("axis")
-      ;   
-    velocityYaw = 0.001;
-
-    cp5.addSlider("Roll velocity",0.001,0.02,0,20,340,300,20)
-      .setDecimalPrecision(3)
-      .plugTo(parent,"velocityRoll")
-      .moveTo("axis")
-      ;
-    velocityRoll =0.001;
-
-    cp5.addToggle("reset rotations")
-      .setPosition(20,380)
-      .setSize(40,20)
-      .moveTo("axis")
-      ;
-
-
-
-    
-    /// ///------------- lights
-    fixLight = false;
-    cp5.addToggle("fix light")
-     .setPosition(20,40)
-     .setSize(50,20)
-     ;
-    cp5.getController("fix light").moveTo("lights");
-
-    lightYpos = 0;
-    cp5.addSlider("lights Y pos",1.0,-1.0,0,480,40,20,300)
-      .plugTo(parent,"lightYpos");
-    cp5.getController("lights Y pos").moveTo("lights");
-
-    lightsNr = 5;
-    cp5.addSlider("spotlights nr",0,5,lightsNr,20,80,200,20)
-      .plugTo(parent,"lightsNr");
-    cp5.getController("spotlights nr").moveTo("lights");
-
-    lightZ =100;
-    cp5.addSlider("spotlights z",0,1000,lightZ,20,105,200,20)
-      .plugTo(parent,"lightZ");
-    cp5.getController("spotlights z").moveTo("lights");
-
-    lightAngle = PI/2;
-    cp5.addSlider("spotlights cone angle",PI,PI/16,lightAngle,20,130,200,20)
-      .plugTo(parent,"lightAngle");
-    cp5.getController("spotlights cone angle").moveTo("lights");
-    
-
-
-
-
-  }
-
+  // set control events for all the controllers
   void controlEvent(ControlEvent theEvent) {
     String n = theEvent.getName();
 
@@ -641,56 +696,61 @@ public class ControlFrame extends PApplet {
     else if( n == "Range random z") {
       rMinZ = int(theEvent.getController().getArrayValue(0));
       rMaxZ = int(theEvent.getController().getArrayValue(1));
-    }
-    
-  }
+    }    
+  } // controlEvent() ends
 
+  // since controlP5 doesn't provide section title display, we have to draw the section titles in all the tabs manually here.
   public void draw() {
       background(0);
       stroke(255);
       fill(255);
       int ref = 40;
       if(cp5.getTab("default").isActive() ){
-        text("INPUT DATA",20,ref);
+        text("INPUT MOVEMENT DATA",20,ref);
         line(10,ref+2,width-10,ref+2);
 
         ref =190;
-        text("BACKGROUND",20,ref);
+        text("INPUT AUDIO",20,ref);
         line(10,ref+2,width-10,ref+2);
 
-        ref = 345;
-        text("BODY",20,ref);
-        line(10,ref+2,width-10,ref+2);
-   
-        ref = 445;
-        text("DISTANCE FILTER",20,ref);
-        line(10,ref+2,width-10,ref+2);
-
-        ref = 545;
-        text("TRIANGLES OPTIONS",20,ref);
+        ref =260;
+        text("OUTPUT KEYFRAMES",20,ref);
         line(10,ref+2,width-10,ref+2);
       }
-      else if(cp5.getTab("noise").isActive()){
+      else if(cp5.getTab("Camera").isActive()){
+        ref = 230;
+        text("AUTO ROTATION",20,ref);
+        line(10,ref+2,width-10,ref+2);
+      }
+      else if(cp5.getTab("Data Transform").isActive()){
         text("PERLIN NOISE",20,ref);
         line(10,ref+2,width-10,ref+2);
         ref =290;
         text("RANDOM",20,ref);
         line(10,ref+2,width-10,ref+2);
       }
-      else if(cp5.getTab("axis").isActive()){
-        ref = 230;
-        text("AUTO ROTATION",20,ref);
+      else if(cp5.getTab("Triangulation").isActive()){
+        text("BACKGROUND",20,ref);
+        line(10,ref+2,width-10,ref+2);
+        
+        ref += 155;
+        text("BODY",20,ref);
+        line(10,ref+2,width-10,ref+2);
+   
+        ref += 100;
+        text("DISTANCE FILTER",20,ref);
         line(10,ref+2,width-10,ref+2);
 
+        ref += 100;
+        text("TRIANGLES OPTIONS",20,ref);
+        line(10,ref+2,width-10,ref+2);
       }
 
       line(10,735,width-10,735);
 
       fill(255,255,0);
       text(frameRateBig,20,760);
-
-
-  }
+  } // draw() ends
   
   private ControlFrame() {
   }
