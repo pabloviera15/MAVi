@@ -37,6 +37,11 @@ public class ControlFrame extends PApplet {
       .setColorLabel(color(255))
       .setColorActive(color(0,255,20))
       ;
+    cp5.addTab("About")
+      .setColorBackground(color(0, 0, 100))
+      .setColorLabel(color(255))
+      .setColorActive(color(255,20,0))
+      ;
 
     cp5.getTab("default")
        .activateEvent(true)
@@ -58,6 +63,10 @@ public class ControlFrame extends PApplet {
     cp5.getTab("Triangulation")
        .activateEvent(true)
        .setId(3)
+       ;
+    cp5.getTab("About")
+       .activateEvent(true)
+       .setId(6)
        ;
 
     // set up controllers in each tab
@@ -707,6 +716,7 @@ public class ControlFrame extends PApplet {
       int ref = 40;
       if(cp5.getTab("default").isActive() ){
         text("INPUT MOVEMENT DATA",20,ref);
+        println(ref+"here!");
         line(10,ref+2,width-10,ref+2);
 
         ref =190;
@@ -744,6 +754,28 @@ public class ControlFrame extends PApplet {
         ref += 100;
         text("TRIANGLES OPTIONS",20,ref);
         line(10,ref+2,width-10,ref+2);
+      }
+      else if(cp5.getTab("About").isActive()){
+        ref = 40;
+        line(10,ref+2,width-10,ref+2);
+        ref += 330;
+        line(10,ref+2,width-10,ref+2);
+        
+        ref = 28;
+        text("VIDEO MAKING",20,ref,340,ref+400);
+        ref += 20;
+        text("To make video, please do the following steps:",20,ref,340,ref+300);
+        ref += 10;
+        text("\n1. record frames with the button on the gui;\n2. select \"Tools > Movie Maker\";\n3. choose the directory of the folder that includes the frames (in the same place as the pde files, named with number like \"1\");\n4. set: frame rate: 30; compression: JPEG; check \"same size as originals\";\n5. choose \"Create Movie\" button, a mov file will be generated; ",40,ref,340,ref+300);
+        ref += 160;
+        text("Note that if you get an \"indexOutOfBoundsException\", that means the last frame was not record properly because we stopped recording. Please delete the last frame then make the video again.",40,ref,340,ref+300);
+        ref +=70;
+        text("Notice: of all the three kinds of output image type candidate (tga, tif, png), png is the only one that can work to make video by processing 2.2.1's video maker. But when recording the frame rate will become very low.",20,ref,340,ref+400);
+        
+        ref += 70;
+        text("RESOLUTION",20,ref,340,ref+400);
+        ref += 20;
+        text("Now the size of the window is 1920*1080 (HD 1080p) for making high res vedio. I found it inconvenient when user playing with it. If you want the original one, I left the original size there in the code (right at the top in the setup(), above the current line of size setting).",20,ref,340,ref+300);
       }
 
       line(10,735,width-10,735);
