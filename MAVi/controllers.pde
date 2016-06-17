@@ -45,7 +45,7 @@ public class ControlFrame extends PApplet {
 
     cp5.getTab("default")
        .activateEvent(true)
-       .setLabel("Input/Output")
+       .setLabel("Inputs")
        .setId(5)
        ;
     cp5.getTab("Camera")
@@ -70,9 +70,31 @@ public class ControlFrame extends PApplet {
        ;
 
     // set up controllers in each tab
-  /*
-   *  I/O tab start
-   */
+    
+    /*
+     *  Global
+     */
+     
+    ////////////////// OUTPUT KEYFRAME ///////////////
+    cp5.addRadioButton("recording")
+       .setPosition(170, 745)
+       .setSize(60,20)
+       .setColorForeground(color(120))
+       .setColorActive(color(255))
+       .setColorLabel(color(255))
+       .setItemsPerRow(2)
+       .setSpacingColumn(60)
+       .addItem("record",1)
+       .addItem("stop",2)
+       //.addItem("finish",)
+       .moveTo("global");
+    isRecording = false;
+    
+    // Global end ---------------------------------
+    
+    /*
+     *  Inputs tab start
+     */
 
     ////////////////// INPUT MOVEMENT DATA ///////////////
     yShift = 20;
@@ -124,27 +146,12 @@ public class ControlFrame extends PApplet {
     // cp5.getController("audio pause").moveTo("default");
       yShift+=70;
 
-    ////////////////// OUTPUT KEYFRAME ///////////////
-    cp5.addRadioButton("recording")
-       .setPosition(20, yShift)
-       .setSize(60,20)
-       .setColorForeground(color(120))
-       .setColorActive(color(255))
-       .setColorLabel(color(255))
-       .setItemsPerRow(2)
-       .setSpacingColumn(60)
-       .addItem("record",1)
-       .addItem("stop",2)
-       //.addItem("finish",)
-       ;
-      isRecording = false;
-
-//  I/O tab end ---------------------------------
- 
-
-/*
- *  Camera tab start
- */
+    //  Inputs tab end ---------------------------------
+     
+    
+    /*
+     *  Camera tab start
+     */
     yShift = 20;
     cp5.addToggle("flipX")
      .setPosition(20,50)
@@ -206,12 +213,12 @@ public class ControlFrame extends PApplet {
       .moveTo("Camera")
       ;
 
-//  Camera tab end ---------------------------------
-
-
-/*
- *  Lights tab start
- */
+    //  Camera tab end ---------------------------------
+    
+    
+    /*
+     *  Lights tab start
+     */
 
     fixLight = false;
     cp5.addToggle("fix light")
@@ -240,12 +247,12 @@ public class ControlFrame extends PApplet {
       .plugTo(parent,"lightAngle");
     cp5.getController("spotlights cone angle").moveTo("Lights");
 
-//  Lights tab end ---------------------------------
-
-
-/*
- *  Data Transform tab start
- */
+    //  Lights tab end ---------------------------------
+    
+    
+    /*
+     *  Data Transform tab start
+     */
     ////////////////// PERLIN NOISE ///////////////
 
     cp5.addSlider("Perlin Distance X",0,0.05,0,20,50,300,20)
@@ -349,12 +356,12 @@ public class ControlFrame extends PApplet {
      ;
 
 
-//  Data Transform tab end ---------------------------------
-
-
-/*
- *  Triangulation tab start
- */
+    //  Data Transform tab end ---------------------------------
+    
+    
+    /*
+     *  Triangulation tab start
+     */
     yShift = 50;
 
     ////////////////// BACKGROUND ///////////////
@@ -507,7 +514,22 @@ public class ControlFrame extends PApplet {
       .plugTo(parent,"hRef")
       .moveTo("Triangulation")
       ;
-
+      
+    yShift+=30;
+    
+    sat=255;
+    cp5.addSlider("saturation",0,255,sat,20,120+yShift,240,20)
+      .plugTo(parent,"sat")
+      .moveTo("Triangulation")
+      ;
+      
+    yShift+=30;
+    
+    light=255;
+    cp5.addSlider("lightness",0,255,light,20,120+yShift,240,20)
+      .plugTo(parent,"light")
+      .moveTo("Triangulation")
+      ;
 
     cp5.addButton("select picture")
      //.setValue(0)
@@ -716,16 +738,12 @@ public class ControlFrame extends PApplet {
       int ref = 40;
       if(cp5.getTab("default").isActive() ){
         text("INPUT MOVEMENT DATA",20,ref);
-        println(ref+"here!");
         line(10,ref+2,width-10,ref+2);
 
         ref =190;
         text("INPUT AUDIO",20,ref);
         line(10,ref+2,width-10,ref+2);
 
-        ref =260;
-        text("OUTPUT KEYFRAMES",20,ref);
-        line(10,ref+2,width-10,ref+2);
       }
       else if(cp5.getTab("Camera").isActive()){
         ref = 230;
@@ -810,3 +828,4 @@ ControlFrame addControlFrame(String theName, int theWidth, int theHeight) {
   f.setVisible(true);
   return p;
 }
+

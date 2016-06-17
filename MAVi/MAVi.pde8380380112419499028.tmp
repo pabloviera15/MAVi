@@ -4,30 +4,30 @@
  * Last updated: June 11th, 2016
  * Last edited by: Sunny Zhang
  */
-
+ 
 import peasy.*;
 import java.awt.Frame;
 import java.awt.BorderLayout;
 import controlP5.*;
 
-private ControlP5 cp5;
-ControlFrame cf;
+import org.processing.wiki.triangulate.*;
+import processing.video.*;
+
+import punktiert.math.*;
+import punktiert.GPUPhysics.*;
+import punktiert.physics.*;
+import punktiert.math.Vec;
+import punktiert.physics.*;
 
 import java.util.List;
 import java.util.Arrays;
 
-// for VIZ_TRIANGULATION
-import org.processing.wiki.triangulate.*;
-import processing.video.*;
-// for VIZ_PARTICLES
-import punktiert.math.Vec;
-import punktiert.physics.*;
+private ControlP5 cp5;
+ControlFrame cf;
 
-// define visStates
-int VIZ_TRIANGULATION = 0;
-int VIZ_STICKFIGURE = 1;
-int VIZ_PARTICLES = 2;
-int visState = VIZ_TRIANGULATION;
+int visState = 1;
+int TRIANGULATION = 0;
+int PARTICLES = 1;
 
 // surface generation
 Delaunay d;
@@ -104,18 +104,9 @@ int hMin;
 int hMax;
 // hue shift
 int hRef;
-// saturation
-int sat;
-// lightness
-int light;
 
 // particle system
-//physics system for mesh
-VPhysicsSimple physics;
-//physics for constraints
-VPhysicsSimple physicsConstraints;
-//attractor
-BAttraction attr;
+VPhysics physics;
 
 // how big should be the rotation x, y and z change
 float factor = 0.05;
@@ -239,6 +230,7 @@ void setup() {
   rotX = rotY = rotZ = 0;
   transZ = 0;
 
+
   //marker data
   markersTable = loadTable("markers.csv");
   currentFrame = 0;
@@ -251,6 +243,7 @@ void setup() {
   println("mocapinst.mocap.frmRate: "+mocapinst.mocap.frmRate); 
   // set framerate from mocap data
   setFrameRate();
+
 
   initialRescaleRanges();
 
@@ -275,9 +268,6 @@ void setup() {
   flipTable(false, true, false);
 
   println("maxRange "+maxRange);
-
-  // for VIZ_PARTICLE
-  setUpParticles();
 }
 
 void draw() {
@@ -294,8 +284,8 @@ void draw() {
     cam.setRotations(p, y, r);
   }
 
-  //update bodyRef from mocap source (mocap/kinect/etc.)
-  getBody();
+  //update bodyRef and bodyPartsCoordinates from mocap source (mocap/kinect/etc.)
+  getBody(); 
 
   // add randomness and noise
   // 1 add random aroundNr of vecs based on bodyRef 
@@ -324,11 +314,9 @@ void draw() {
   // draw the contents
   noStroke();
   if (pointsToDraw.size()>0) {
-    if (visState==VIZ_TRIANGULATION) {
+    if (visState==TRIANGULATION) {
       if (makeDelauney) makeAndDrawDelauneyTriangulation();
       else makeAndDrawTriangulation();
-    } else if (visState==VIZ_PARTICLES) {
-      drawParticles();
     }
   }
 
@@ -362,7 +350,7 @@ float flipVal(float v) {
 
 void drawBodyPoints() {
   for (PVector v : bodyRef) {
-    stroke(100, 0, 0);
+    stroke(255, 0, 0);
     strokeWeight(2);
     point(v.x, v.y, v.z);
   }

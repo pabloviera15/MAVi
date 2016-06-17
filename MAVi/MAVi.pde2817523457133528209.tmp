@@ -10,24 +10,24 @@ import java.awt.Frame;
 import java.awt.BorderLayout;
 import controlP5.*;
 
-private ControlP5 cp5;
-ControlFrame cf;
+import org.processing.wiki.triangulate.*;
+import processing.video.*;
+
+import punktiert.math.*;
+import punktiert.GPUPhysics.*;
+import punktiert.physics.*;
+import punktiert.math.Vec;
+import punktiert.physics.*;
 
 import java.util.List;
 import java.util.Arrays;
 
-// for VIZ_TRIANGULATION
-import org.processing.wiki.triangulate.*;
-import processing.video.*;
-// for VIZ_PARTICLES
-import punktiert.math.Vec;
-import punktiert.physics.*;
+private ControlP5 cp5;
+ControlFrame cf;
 
-// define visStates
+int visState = VIZ_PARTICLES;
 int VIZ_TRIANGULATION = 0;
-int VIZ_STICKFIGURE = 1;
-int VIZ_PARTICLES = 2;
-int visState = VIZ_TRIANGULATION;
+int VIZ_PARTICLES = 1;
 
 // surface generation
 Delaunay d;
@@ -104,18 +104,9 @@ int hMin;
 int hMax;
 // hue shift
 int hRef;
-// saturation
-int sat;
-// lightness
-int light;
 
 // particle system
-//physics system for mesh
-VPhysicsSimple physics;
-//physics for constraints
-VPhysicsSimple physicsConstraints;
-//attractor
-BAttraction attr;
+VPhysics physics;
 
 // how big should be the rotation x, y and z change
 float factor = 0.05;
@@ -277,7 +268,23 @@ void setup() {
   println("maxRange "+maxRange);
 
   // for VIZ_PARTICLE
-  setUpParticles();
+  // initialize particles engine
+  physics = new VPhysics();
+  for (int i = 0; i < 1000; i++) {
+    Vec pos = new Vec(0, 0, 0).jitter(1);
+    Vec vel = new Vec(random(-1, 1), random(-1, 1), random(-1, 1));
+    VBoid p = new VBoid(pos, vel);
+    p.setRadius(20);
+
+    p.swarm.setCohesionRadius(80);
+    p.trail.setInPast(3);
+    p.trail.setreductionFactor(2);
+    physics.addParticle(p);
+
+    p.addBehavior(new BCollision());
+
+    physics.addSpring(new VSpringRange(p, new VParticle(), 300, 400, 0.0005f));
+  }
 }
 
 void draw() {
@@ -294,8 +301,8 @@ void draw() {
     cam.setRotations(p, y, r);
   }
 
-  //update bodyRef from mocap source (mocap/kinect/etc.)
-  getBody();
+  //update bodyRef and bodyPartsCoordinates from mocap source (mocap/kinect/etc.)
+  getBody(); 
 
   // add randomness and noise
   // 1 add random aroundNr of vecs based on bodyRef 
@@ -327,8 +334,30 @@ void draw() {
     if (visState==VIZ_TRIANGULATION) {
       if (makeDelauney) makeAndDrawDelauneyTriangulation();
       else makeAndDrawTriangulation();
-    } else if (visState==VIZ_PARTICLES) {
-      drawParticles();
+    } 
+    else if (visState==VIZ_PARTICLES) {  
+      background(240);
+      physics.update();
+      for (int i = 0; i < physics.particles.size (); i++) {
+        VBoid boid = (VBoid) physics.particles.get(i);
+
+        strokeWeight(5);
+        stroke(0);
+        point(boid.x, boid.y, boid.z);
+
+        if (frameCount > 400) {
+          boid.trail.setInPast(100);
+        }
+        strokeWeight(1);
+        stroke(200, 0, 0);
+        noFill();
+        beginShape();
+        for (int j = 0; j < boid.trail.particles.size (); j++) {
+          VParticle t = boid.trail.particles.get(j);
+          vertex(t.x, t.y, t.z);
+        }
+        endShape();
+      }
     }
   }
 
@@ -362,7 +391,7 @@ float flipVal(float v) {
 
 void drawBodyPoints() {
   for (PVector v : bodyRef) {
-    stroke(100, 0, 0);
+    stroke(255, 0, 0);
     strokeWeight(2);
     point(v.x, v.y, v.z);
   }

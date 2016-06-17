@@ -149,7 +149,8 @@ class MocapInstance {
 
     bvhRescaled = true;
   }
-
+  
+  // get the mocap joints' position sets and put them into bodyRef and record them in bodyPartsCoordinates.
   void getMocap() {
 
     bodyRef.clear();
@@ -158,14 +159,17 @@ class MocapInstance {
     for(Joint itJ : mocap.joints) {
       float posx=itJ.position.get(currentFrame).x;
       float posy=itJ.position.get(currentFrame).y; 
-      float posz=itJ.position.get(currentFrame).z; 
-      //println("currentFrame",currentFrame,posx,posy,posz);
+      float posz=itJ.position.get(currentFrame).z;         
+
       String nowKey = (int)posx +"_"+(int)posy+"_"+(int)posz ;
+      
+      // if there's no such point, add the point and set it's value to "ok"
       if(!bodyPartsCoordinates.hasKey(nowKey)){
       //if(!(abs((int)posx) ==0 && abs((int)posy)==0 && abs((int)posz)==0)){
         PVector current = new PVector(posx,posy,posz);      
         bodyRef.add(current);
         bodyPartsCoordinates.set(nowKey,"ok");
+  println(bodyPartsCoordinates);
       
         if(doLerp){
           if(j!=0) {
@@ -181,12 +185,12 @@ class MocapInstance {
           j++;
         }
       }
-      //else println("AAAAAAAAAA");
-    } 
+    }
+    
     currentFrame = (currentFrame+1) % (mocap.frameNumber);
     if (currentFrame==lastFrame+1) {
       currentFrame = firstFrame;
-      }
+    }
   }  
 }
 
